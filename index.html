@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Times Equilibrados</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Fonte Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #1a472a; /* Verde gramado escuro */
+            background-image: radial-gradient(#2d6a4f 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .title-font {
+            font-family: 'Russo One', sans-serif;
+        }
+
+        /* Animação de confete simples */
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .player-card {
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .star-btn:hover {
+            transform: scale(1.2);
+        }
+        
+        .field-pattern {
+            background: repeating-linear-gradient(
+                0deg,
+                #2f855a,
+                #2f855a 20px,
+                #276749 20px,
+                #276749 40px
+            );
+        }
+
+        /* Estilo para o input de estrelas */
+        .rating-star {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .rating-star.active {
+            color: #fbbf24; /* Amarelo */
+            fill: #fbbf24;
+        }
+        .rating-star.inactive {
+            color: #d1d5db; /* Cinza */
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-100 pb-10">
+
+    <!-- Cabeçalho -->
+    <header class="bg-gradient-to-r from-green-800 to-green-900 shadow-lg p-4 sticky top-0 z-10 border-b-4 border-yellow-500">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="trophy" class="text-yellow-400 w-8 h-8"></i>
+                <h1 class="text-2xl md:text-3xl title-font text-white tracking-wider uppercase">Pelada Boituva</h1>
+            </div>
+            <div class="text-xs md:text-sm bg-green-700 px-3 py-1 rounded-full font-bold text-yellow-300 border border-yellow-500">
+                Sorteio Equilibrado
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto p-4 space-y-6">
+
+        <!-- Área de Cadastro -->
+        <section class="bg-white text-gray-800 rounded-xl shadow-2xl overflow-hidden">
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="font-bold text-lg flex items-center gap-2 text-green-800">
+                    <i data-lucide="user-plus" class="w-5 h-5"></i> Adicionar Jogador
+                </h2>
+            </div>
+            
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Craque</label>
+                    <input type="text" id="playerName" class="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-500 focus:ring focus:ring-green-200 transition outline-none text-lg" placeholder="Ex: Ronaldinho" onkeypress="handleEnter(event)">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Habilidade (1 a 5)</label>
+                    <div class="flex gap-2 justify-center bg-gray-100 p-3 rounded-lg" id="starContainer">
+                        <!-- Estrelas geradas via JS -->
+                    </div>
+                    <div class="text-center text-sm text-gray-500 mt-1" id="skillLabel">Selecione o nível</div>
+                </div>
+
+                <button onclick="addPlayer()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition active:scale-95 flex items-center justify-center gap-2 text-lg">
+                    <i data-lucide="plus-circle"></i> Adicionar à Lista
+                </button>
+            </div>
+        </section>
+
+        <!-- Lista de Jogadores e Configurações -->
+        <div class="grid md:grid-cols-2 gap-4">
+            
+            <!-- Configuração -->
+            <section class="bg-green-800/80 backdrop-blur rounded-xl p-4 border border-green-600 shadow-lg">
+                <h3 class="font-bold text-yellow-300 mb-3 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Configuração
+                </h3>
+                <div class="flex items-center justify-between">
+                    <label class="text-sm">Jogadores por Time:</label>
+                    <div class="flex items-center bg-white rounded-lg overflow-hidden text-gray-900">
+                        <button onclick="adjustTeamSize(-1)" class="px-3 py-2 hover:bg-gray-200 bg-gray-100">-</button>
+                        <input type="number" id="teamSize" value="6" class="w-12 text-center font-bold outline-none" readonly>
+                        <button onclick="adjustTeamSize(1)" class="px-3 py-2 hover:bg-gray-200 bg-gray-100">+</button>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-green-200 flex items-center gap-1">
+                    <i data-lucide="info" class="w-3 h-3"></i> Total de jogadores: <span id="totalPlayersCount" class="font-bold text-white text-base ml-1">0</span>
+                </div>
+            </section>
+
+            <!-- Botão de Ação -->
+            <section class="flex flex-col justify-end">
+                <button onclick="sortTeams()" id="sortBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-yellow-900 font-black py-4 px-6 rounded-xl shadow-lg transform transition hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl border-b-4 border-yellow-700">
+                    <i data-lucide="shuffle"></i> SORTEAR TIMES
+                </button>
+            </section>
+        </div>
+
+        <!-- Lista de Jogadores Adicionados -->
+        <section id="playersListSection" class="hidden">
+            <div class="flex justify-between items-end mb-2">
+                <h3 class="font-bold text-lg">Jogadores na Espera</h3>
+                <button onclick="clearAll()" class="text-xs text-red-300 hover:text-red-100 underline">Limpar tudo</button>
+            </div>
+            <div id="playersGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <!-- Cards entram aqui -->
+            </div>
+        </section>
+
+        <!-- Resultado do Sorteio -->
+        <section id="resultSection" class="hidden space-y-6">
+            <h2 class="text-center title-font text-3xl text-yellow-400 drop-shadow-md">Times Definidos</h2>
+            <div id="teamsContainer" class="grid md:grid-cols-2 gap-6">
+                <!-- Times gerados aqui -->
+            </div>
+            
+            <div class="text-center pb-8">
+                <button onclick="copyToClipboard()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg inline-flex items-center gap-2">
+                    <i data-lucide="copy"></i> Copiar para WhatsApp
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notificação Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+        <i data-lucide="check-circle" class="text-green-400"></i>
+        <span id="toastMsg">Mensagem</span>
+    </div>
+
+    <script>
+        // Inicialização de ícones e estado
+        lucide.createIcons();
+        
+        let players = [];
+        let currentRating = 3; // Valor padrão inicial
+
+        // Setup das Estrelas
+        const starContainer = document.getElementById('starContainer');
+        const skillLabel = document.getElementById('skillLabel');
+        const labels = ["Perna de Pau (1)", "Iniciante (2)", "Médio (3)", "Bom (4)", "Craque (5)"];
+
+        function renderStars() {
+            starContainer.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('i');
+                // Usando classes do Lucide ou SVG direto
+                star.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="${i <= currentRating ? '#fbbf24' : 'none'}" stroke="${i <= currentRating ? '#fbbf24' : '#9ca3af'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star rating-star ${i <= currentRating ? 'active' : 'inactive'}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+                star.onclick = () => setRating(i);
+                starContainer.appendChild(star);
+            }
+            skillLabel.innerText = labels[currentRating - 1];
+        }
+        
+        function setRating(val) {
+            currentRating = val;
+            renderStars();
+        }
+
+        function adjustTeamSize(delta) {
+            const input = document.getElementById('teamSize');
+            let val = parseInt(input.value) + delta;
+            if (val < 2) val = 2;
+            if (val > 20) val = 20;
+            input.value = val;
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') addPlayer();
+        }
+
+        function addPlayer() {
+            const nameInput = document.getElementById('playerName');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                showToast("Digite o nome do jogador!", true);
+                return;
+            }
+
+            players.push({
+                id: Date.now(),
+                name: name,
+                skill: currentRating
+            });
+
+            nameInput.value = '';
+            nameInput.focus();
+            // Reseta rating para 3 para agilizar
+            setRating(3);
+            
+            updateUI();
+            showToast(`${name} adicionado!`);
+        }
+
+        function removePlayer(id) {
+            players = players.filter(p => p.id !== id);
+            updateUI();
+        }
+
+        function clearAll() {
+            if(confirm("Tem certeza que quer apagar todos os jogadores?")) {
+                players = [];
+                updateUI();
+                document.getElementById('resultSection').classList.add('hidden');
+            }
+        }
+
+        function updateUI() {
+            const grid = document.getElementById('playersGrid');
+            const countSpan = document.getElementById('totalPlayersCount');
+            const section = document.getElementById('playersListSection');
+
+            countSpan.innerText = players.length;
+
+            if (players.length === 0) {
+                section.classList.add('hidden');
+            } else {
+                section.classList.remove('hidden');
+            }
+
+            grid.innerHTML = '';
+            
+            // Ordenar visualmente apenas por ordem de chegada (invertida) para ver os ultimos
+            const displayList = [...players].reverse();
+
+            displayList.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-card bg-white rounded-lg p-3 shadow flex justify-between items-center border-l-4 ' + getBorderColor(p.skill);
+                
+                div.innerHTML = `
+                    <div class="overflow-hidden">
+                        <div class="font-bold text-gray-800 truncate">${p.name}</div>
+                        <div class="flex text-yellow-500">
+                            ${getStarString(p.skill)}
+                        </div>
+                    </div>
+                    <button onclick="removePlayer(${p.id})" class="text-red-400 hover:text-red-600 p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function getBorderColor(skill) {
+            if (skill >= 5) return 'border-purple-500';
+            if (skill >= 4) return 'border-green-500';
+            if (skill >= 3) return 'border-yellow-500';
+            return 'border-gray-400';
+        }
+
+        function getStarString(count) {
+            let s = '';
+            for(let i=0; i<count; i++) s += '★';
+            return s;
+        }
+
+        // ==========================================
+        // LÓGICA DO SORTEIO (O CÉREBRO DO APP)
+        // ==========================================
+        function sortTeams() {
+            if (players.length < 2) {
+                showToast("Adicione pelo menos 2 jogadores!", true);
+                return;
+            }
+
+            const playersPerTeam = parseInt(document.getElementById('teamSize').value);
+            const numberOfTeams = Math.ceil(players.length / playersPerTeam);
+
+            // 1. Separar jogadores por habilidade (buckets)
+            let buckets = {5:[], 4:[], 3:[], 2:[], 1:[]};
+            players.forEach(p => buckets[p.skill].push(p));
+
+            // 2. Embaralhar cada bucket (para que os de mesmo nível não fiquem sempre na mesma ordem)
+            for(let k in buckets) {
+                buckets[k] = shuffleArray(buckets[k]);
+            }
+
+            // 3. Criar uma lista única ordenada por habilidade (do melhor pro pior), mas com aleatoriedade dentro do nível
+            let sortedPool = [];
+            [5, 4, 3, 2, 1].forEach(level => {
+                sortedPool = sortedPool.concat(buckets[level]);
+            });
+
+            // 4. Distribuição "Snake" (Cobra) para equilibrar
+            // Ex: Time 1 pega o melhor, Time 2 o segundo... Na volta, Time 2 pega primeiro.
+            let teams = Array.from({length: numberOfTeams}, () => ({members: [], totalSkill: 0}));
+            
+            sortedPool.forEach((player, index) => {
+                // Determina qual time recebe o jogador
+                // Round 0 (0 a N-1): 0, 1, 2...
+                // Round 1 (N a 2N-1): 2, 1, 0... (Inverte a ordem)
+                const round = Math.floor(index / numberOfTeams);
+                let teamIndex;
+
+                if (round % 2 === 0) {
+                    teamIndex = index % numberOfTeams;
+                } else {
+                    teamIndex = (numberOfTeams - 1) - (index % numberOfTeams);
+                }
+
+                teams[teamIndex].members.push(player);
+                teams[teamIndex].totalSkill += player.skill;
+            });
+
+            renderResults(teams);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderResults(teams) {
+            const container = document.getElementById('teamsContainer');
+            const resultSection = document.getElementById('resultSection');
+            
+            container.innerHTML = '';
+            
+            teams.forEach((team, i) => {
+                const teamCard = document.createElement('div');
+                teamCard.className = 'field-pattern rounded-xl overflow-hidden shadow-2xl border-4 border-white';
+                
+                // Cabeçalho do time
+                let avg = (team.totalSkill / team.members.length).toFixed(1);
+                if(isNaN(avg)) avg = 0;
+
+                let html = `
+                    <div class="bg-gradient-to-b from-gray-900 to-gray-800 p-3 text-center border-b-2 border-yellow-500">
+                        <h3 class="text-xl font-black text-white uppercase tracking-wider">Time ${i + 1}</h3>
+                        <div class="flex justify-center items-center gap-4 text-xs text-gray-400 mt-1">
+                            <span><strong class="text-white">${team.members.length}</strong> Jogadores</span>
+                            <span>Força: <strong class="text-yellow-400">${team.totalSkill}</strong> (${avg}★/avg)</span>
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-2">
+                `;
+
+                // Lista de jogadores do time
+                team.members.forEach(p => {
+                    html += `
+                        <div class="flex justify-between items-center bg-white/90 p-2 rounded shadow-sm">
+                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                <i data-lucide="shirt" class="w-4 h-4 text-green-700"></i>
+                                ${p.name}
+                            </span>
+                            <div class="flex text-yellow-500 text-xs">
+                                ${getStarString(p.skill)}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                teamCard.innerHTML = html;
+                container.appendChild(teamCard);
+            });
+
+            resultSection.classList.remove('hidden');
+            
+            // Scroll suave até o resultado
+            setTimeout(() => {
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+                lucide.createIcons();
+            }, 100);
+        }
+
+        function copyToClipboard() {
+            const teams = document.getElementById('teamsContainer').children;
+            let text = "⚽ *TIMES SORTEADOS* ⚽\n\n";
+
+            Array.from(teams).forEach((card) => {
+                const title = card.querySelector('h3').innerText;
+                const stats = card.querySelector('.text-gray-400').innerText.replace(/\n/g, ' ');
+                text += `*${title}* (${stats})\n`;
+                
+                const players = card.querySelectorAll('.bg-white\\/90');
+                players.forEach(p => {
+                    const name = p.querySelector('.font-bold').innerText;
+                    const stars = p.querySelector('.text-yellow-500').innerText;
+                    text += `- ${name} ${stars}\n`;
+                });
+                text += "\n";
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Copiado! Cole no WhatsApp.");
+            });
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMsg');
+            const icon = toast.querySelector('i');
+            
+            msgEl.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            if(isError) {
+                icon.setAttribute('data-lucide', 'alert-circle');
+                icon.classList.remove('text-green-400');
+                icon.classList.add('text-red-400');
+            } else {
+                icon.setAttribute('data-lucide', 'check-circle');
+                icon.classList.add('text-green-400');
+                icon.classList.remove('text-red-400');
+            }
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Init
+        renderStars();
+
+    </script>
+</body>
+</html>

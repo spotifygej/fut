@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorteador de Times Equilibrados (Cloud)</title>
+    <title>Sorteador de Times (Lista Pública)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -18,9 +18,7 @@
         
         .title-font { font-family: 'Russo One', sans-serif; }
 
-        .player-card {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .player-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         
         .player-card.selected {
             background-color: #d1fae5;
@@ -29,56 +27,27 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
-        .player-card.selected .check-icon {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .check-icon {
-            opacity: 0;
-            transform: scale(0.5);
-            transition: all 0.2s;
-        }
+        .player-card.selected .check-icon { opacity: 1; transform: scale(1); }
+        .check-icon { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
 
         .field-pattern {
             background: repeating-linear-gradient(0deg, #2f855a, #2f855a 20px, #276749 20px, #276749 40px);
         }
 
         .nav-tab.active {
-            background-color: #fbbf24;
-            color: #78350f;
-            border-bottom: 4px solid #b45309;
+            background-color: #fbbf24; color: #78350f; border-bottom: 4px solid #b45309;
         }
         .nav-tab.inactive {
-            background-color: rgba(255,255,255,0.1);
-            color: #d1fae5;
+            background-color: rgba(255,255,255,0.1); color: #d1fae5;
         }
 
-        /* Loading Spinner */
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #fbbf24;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
+            border: 4px solid #f3f3f3; border-top: 4px solid #fbbf24;
+            border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Modal de Senha */
-        .glass-modal {
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Toggle Switch */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #68D391;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #68D391;
-        }
+        .glass-modal { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body class="min-h-screen text-gray-100 pb-20">
@@ -88,7 +57,7 @@
         <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i data-lucide="trophy" class="text-yellow-400 w-6 h-6"></i>
-                <h1 class="text-xl md:text-2xl title-font text-white tracking-wider uppercase">Pelada PRO <span class="text-[10px] bg-blue-600 px-1 rounded align-middle">CLOUD</span></h1>
+                <h1 class="text-xl md:text-2xl title-font text-white tracking-wider uppercase">Pelada PRO <span class="text-[10px] bg-purple-600 px-1 rounded align-middle">ONLINE</span></h1>
             </div>
             
             <div class="flex bg-green-900/50 p-1 rounded-lg">
@@ -96,8 +65,7 @@
                     <i data-lucide="users" class="w-4 h-4"></i> Escalação
                 </button>
                 <button onclick="attemptLogin()" id="btnConfig" class="nav-tab inactive px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition-all">
-                    <i id="lockIcon" data-lucide="lock" class="w-3 h-3"></i>
-                    Gerenciar
+                    <i id="lockIcon" data-lucide="lock" class="w-3 h-3"></i> Gerenciar
                 </button>
             </div>
         </div>
@@ -108,7 +76,7 @@
         <!-- Loading Overlay -->
         <div id="loadingOverlay" class="fixed inset-0 bg-green-900/80 backdrop-blur z-50 flex flex-col items-center justify-center">
             <div class="loader mb-4 w-12 h-12 border-4"></div>
-            <p class="animate-pulse font-bold text-yellow-400">Conectando ao Banco de Dados...</p>
+            <p class="animate-pulse font-bold text-yellow-400">Sincronizando Lista Pública...</p>
         </div>
 
         <!-- Modal de Senha -->
@@ -157,10 +125,9 @@
                 </h3>
                 
                 <div id="rosterGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
-
                 <div id="emptyRosterMsg" class="hidden text-center py-10 opacity-60">
                     <i data-lucide="ghost" class="w-12 h-12 mx-auto mb-2 text-green-300"></i>
-                    <p>Nenhum jogador encontrado.</p>
+                    <p>Nenhum jogador encontrado na lista pública.</p>
                 </div>
             </div>
 
@@ -205,19 +172,19 @@
                     </div>
 
                     <button onclick="savePlayer()" id="btnSavePlayer" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow transform transition active:scale-95 flex items-center justify-center gap-2">
-                        <i data-lucide="save"></i> Salvar na Nuvem
+                        <i data-lucide="save"></i> Salvar na Nuvem Pública
                     </button>
                 </div>
             </section>
 
             <section>
                 <div class="flex justify-between items-end mb-3">
-                    <h3 class="font-bold text-lg text-white">Banco de Jogadores</h3>
+                    <h3 class="font-bold text-lg text-white">Banco Público de Jogadores</h3>
                     <div id="syncStatus" class="text-xs text-green-300 animate-pulse hidden">Sincronizando...</div>
                 </div>
                 <div id="configList" class="space-y-2"></div>
                 <div class="text-center mt-6">
-                    <button onclick="clearAllData()" class="text-xs text-red-400 hover:text-red-200 underline">Apagar todos os dados</button>
+                    <button onclick="clearAllData()" class="text-xs text-red-400 hover:text-red-200 underline">Apagar dados de TODOS os usuários</button>
                 </div>
             </section>
         </div>
@@ -236,7 +203,6 @@
 
             <div id="teamsContainer" class="grid md:grid-cols-2 gap-6"></div>
             
-            <!-- Seção de Próximos (Leftovers) -->
             <div id="leftoversContainer" class="hidden mt-8 border-t border-green-700 pt-6">
                 <h3 class="text-center font-bold text-green-300 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
                     <i data-lucide="clock"></i> Próximos Jogos (Banco)
@@ -295,12 +261,9 @@
                     await signInAnonymously(auth);
                 }
             } catch (error) {
-                console.warn("Auth falhou, tentando fallback anon:", error);
-                try {
-                    await signInAnonymously(auth);
-                } catch (anonError) {
-                    document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-400 p-4 text-center">Erro Conexão.</p>`;
-                }
+                console.warn("Auth fallback", error);
+                try { await signInAnonymously(auth); } 
+                catch (e) { document.getElementById('loadingOverlay').innerHTML = '<p class="text-red-400 p-4">Erro de conexão</p>'; }
             }
         };
 
@@ -314,25 +277,20 @@
             }
         });
 
+        // --- LISTENER PÚBLICO ---
         function setupRealtimeListener() {
-            if (!userId) return;
-            const q = query(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'players'));
+            const q = query(collection(db, 'artifacts', 'futebol_app', 'public', 'data', 'players'));
             onSnapshot(q, (snapshot) => {
                 players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateUI();
                 document.getElementById('syncStatus').classList.remove('hidden');
                 setTimeout(() => document.getElementById('syncStatus').classList.add('hidden'), 1000);
-            }, (err) => console.error(err));
+            }, (err) => console.error("Erro leitura:", err));
         }
 
         window.attemptLogin = () => {
-            if (window.isAuthenticated) {
-                switchMode('config');
-            } else {
-                document.getElementById('passwordModal').classList.remove('hidden');
-                document.getElementById('adminPassword').value = '';
-                document.getElementById('adminPassword').focus();
-            }
+            if (window.isAuthenticated) { switchMode('config'); } 
+            else { document.getElementById('passwordModal').classList.remove('hidden'); document.getElementById('adminPassword').value = ''; document.getElementById('adminPassword').focus(); }
         }
 
         window.closeLogin = () => document.getElementById('passwordModal').classList.add('hidden');
@@ -347,16 +305,14 @@
                 lucide.createIcons();
             } else {
                 showToast("Senha incorreta!", true);
-                document.getElementById('adminPassword').value = '';
             }
         }
 
+        // --- SALVAR NO PÚBLICO ---
         window.savePlayer = async () => {
-            if (!userId) return;
-            const nameInput = document.getElementById('playerName');
-            const isGKInput = document.getElementById('isGoalkeeper');
-            const name = nameInput.value.trim();
-
+            if (!auth.currentUser) return;
+            const name = document.getElementById('playerName').value.trim();
+            const isGK = document.getElementById('isGoalkeeper').checked;
             if (!name) { showToast("Digite um nome!", true); return; }
 
             const btn = document.getElementById('btnSavePlayer');
@@ -365,24 +321,27 @@
             const playerData = {
                 name: name,
                 skill: Number(window.currentRating),
-                isGoalkeeper: isGKInput.checked
+                isGoalkeeper: isGK
             };
 
             try {
+                // Referência para coleção pública
+                const publicCol = collection(db, 'artifacts', 'futebol_app', 'public', 'data', 'players');
+
                 if (window.editingId) {
-                    await updateDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', window.editingId), playerData);
+                    await updateDoc(doc(publicCol, window.editingId), playerData);
                     showToast(`${name} atualizado!`);
                     window.cancelEdit();
                 } else {
                     playerData.selected = true;
                     playerData.createdAt = Date.now();
-                    await addDoc(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'players'), playerData);
+                    await addDoc(publicCol, playerData);
                     showToast(`${name} adicionado!`);
-                    nameInput.value = '';
-                    isGKInput.checked = false;
+                    document.getElementById('playerName').value = '';
+                    document.getElementById('isGoalkeeper').checked = false;
                     setRating(3);
                 }
-                nameInput.focus();
+                document.getElementById('playerName').focus();
             } catch (e) {
                 console.error(e);
                 showToast("Erro ao salvar", true);
@@ -399,11 +358,13 @@
             document.getElementById('isGoalkeeper').checked = !!p.isGoalkeeper;
             setRating(p.skill);
             
-            document.getElementById('btnSavePlayer').innerHTML = `<i data-lucide="refresh-cw"></i> Atualizar Jogador`;
-            document.getElementById('btnSavePlayer').classList.replace('bg-green-600', 'bg-blue-600');
-            document.getElementById('btnSavePlayer').classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
-            document.getElementById('formTitle').innerHTML = `<i data-lucide="edit"></i> Editando: ${p.name}`;
-            document.getElementById('formTitle').classList.add('text-blue-600');
+            const btn = document.getElementById('btnSavePlayer');
+            btn.innerHTML = `<i data-lucide="refresh-cw"></i> Atualizar Jogador`;
+            btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transform transition active:scale-95 flex items-center justify-center gap-2";
+            
+            const title = document.getElementById('formTitle');
+            title.innerHTML = `<i data-lucide="edit"></i> Editando: ${p.name}`;
+            title.className = "font-bold text-blue-600 flex items-center gap-2";
             document.getElementById('btnCancelEdit').classList.remove('hidden');
             
             document.getElementById('configView').scrollIntoView({behavior: 'smooth'});
@@ -417,20 +378,23 @@
             document.getElementById('isGoalkeeper').checked = false;
             setRating(3);
             
-            document.getElementById('btnSavePlayer').innerHTML = `<i data-lucide="save"></i> Salvar na Nuvem`;
-            document.getElementById('btnSavePlayer').classList.replace('bg-blue-600', 'bg-green-600');
-            document.getElementById('btnSavePlayer').classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
-            document.getElementById('formTitle').innerHTML = `<i data-lucide="user-plus" class="w-5 h-5"></i> Novo Jogador`;
-            document.getElementById('formTitle').classList.remove('text-blue-600');
+            const btn = document.getElementById('btnSavePlayer');
+            btn.innerHTML = `<i data-lucide="save"></i> Salvar na Nuvem Pública`;
+            btn.className = "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow transform transition active:scale-95 flex items-center justify-center gap-2";
+            
+            const title = document.getElementById('formTitle');
+            title.innerHTML = `<i data-lucide="user-plus" class="w-5 h-5"></i> Novo Jogador`;
+            title.className = "font-bold text-green-800 flex items-center gap-2";
             document.getElementById('btnCancelEdit').classList.add('hidden');
             lucide.createIcons();
         }
 
+        // --- REMOVER DO PÚBLICO ---
         window.removePlayer = async (docId) => {
-            if (!userId) return;
-            if(confirm('Remover jogador permanentemente?')) {
+            if (!auth.currentUser) return;
+            if(confirm('Apagar jogador da lista pública?')) {
                 if(window.editingId === docId) window.cancelEdit();
-                await deleteDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', docId));
+                await deleteDoc(doc(db, 'artifacts', 'futebol_app', 'public', 'data', 'players', docId));
             }
         }
 
@@ -481,39 +445,39 @@
             updateUI();
         }
 
+        // --- ATUALIZAR STATUS NO PÚBLICO ---
         window.toggleSelection = async (docId) => {
-            if (!userId) return;
+            if (!auth.currentUser) return;
             const p = players.find(x => x.id === docId);
             if (p) {
+                // Otimista
                 const card = document.querySelector(`[data-id="${docId}"]`);
                 if(card) card.classList.toggle('selected');
-                await updateDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', docId), { selected: !p.selected });
+                
+                await updateDoc(doc(db, 'artifacts', 'futebol_app', 'public', 'data', 'players', docId), { selected: !p.selected });
             }
         }
         
         window.clearAllData = async () => {
-            if (!userId) return;
-            if(confirm("ATENÇÃO: Apagar TODOS os jogadores e o histórico?")) {
-                players.forEach(async p => await deleteDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', p.id)));
+            if (!auth.currentUser) return;
+            if(confirm("CUIDADO: Isso apagará a lista PÚBLICA inteira para todos!")) {
+                players.forEach(async p => await deleteDoc(doc(db, 'artifacts', 'futebol_app', 'public', 'data', 'players', p.id)));
             }
         }
 
         async function getLastGameHistory() {
-            if (!userId) return null;
+            if (!auth.currentUser) return null;
             try {
-                const q = query(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'history'), orderBy('createdAt', 'desc'), limit(1));
+                const q = query(collection(db, 'artifacts', 'futebol_app', 'public', 'data', 'history'), orderBy('createdAt', 'desc'), limit(1));
                 const s = await getDocs(q);
                 return s.empty ? null : s.docs[0].data();
-            } catch (e) {
-                console.warn("Sem histórico acessível:", e);
-                return null;
-            }
+            } catch (e) { return null; }
         }
         
         async function saveGameHistory(teams) {
-             if (!userId) return;
+             if (!auth.currentUser) return;
              try {
-                await addDoc(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'history'), { createdAt: Date.now(), teams: teams.map(t => t.members.map(p => p.name)) });
+                await addDoc(collection(db, 'artifacts', 'futebol_app', 'public', 'data', 'history'), { createdAt: Date.now(), teams: teams.map(t => t.members.map(p => p.name)) });
              } catch (e) {}
         }
 
@@ -533,7 +497,6 @@
                 const last = await getLastGameHistory();
                 let best = null, lowScore = Infinity;
                 
-                // Tenta 20x para achar a melhor combinação
                 for (let i=0; i<20; i++) {
                     const result = genTeams(active, window.teamSize);
                     let sc = last ? calcRep(result.teams, last.teams) : 0;
@@ -559,7 +522,6 @@
             }
         }
 
-        // Lógica Principal de Separação (Corrigida e Simplificada)
         function genTeams(list, teamSize) {
             let gks = list.filter(p => p.isGoalkeeper);
             let field = list.filter(p => !p.isGoalkeeper);
@@ -583,7 +545,7 @@
             }
             if (gks.length > numTeams) gks.slice(numTeams).forEach(g => leftovers.push(g));
 
-            // 2. Ordenar Linha por Skill
+            // 2. Ordenar Linha
             let buckets = {5:[],4:[],3:[],2:[],1:[]};
             field.forEach(p => {
                 let s = parseInt(p.skill);
@@ -595,22 +557,26 @@
             let sortedField = []; 
             [5,4,3,2,1].forEach(l => sortedField = sortedField.concat(buckets[l]));
 
-            // 3. Preencher Times até o limite (Método Greedy Balanceado)
-            sortedField.forEach(p => {
-                // Encontrar times que NÃO estão cheios
-                let availableTeams = teams.map((t, i) => ({...t, index: i})).filter(t => t.members.length < teamSize);
-                
-                if (availableTeams.length > 0) {
-                    // Desses, pegar o que tem MENOS habilidade total (para equilibrar)
-                    // Se empatar na habilidade, pega o que tem MENOS jogadores
-                    availableTeams.sort((a, b) => {
-                        if (a.totalSkill !== b.totalSkill) return a.totalSkill - b.totalSkill;
-                        return a.members.length - b.members.length;
-                    });
+            // 3. Preencher Times (Corrigido para usar contagem total)
+            let slotsFilledByGk = 0;
+            teams.forEach(t => slotsFilledByGk += t.members.length);
+            const totalSlots = numTeams * teamSize;
+            const fieldSlotsNeeded = totalSlots - slotsFilledByGk;
+
+            sortedField.forEach((p, i) => {
+                if (i < fieldSlotsNeeded) {
+                    // Distribui equilibrando habilidade
+                    let availableTeams = teams.map((t, idx) => ({...t, idx})).filter(t => t.members.length < teamSize);
                     
-                    let targetIndex = availableTeams[0].index;
-                    teams[targetIndex].members.push(p);
-                    teams[targetIndex].totalSkill += (parseInt(p.skill) || 3);
+                    if (availableTeams.length > 0) {
+                        availableTeams.sort((a, b) => {
+                            if (a.totalSkill !== b.totalSkill) return a.totalSkill - b.totalSkill;
+                            return a.members.length - b.members.length;
+                        });
+                        let targetIdx = availableTeams[0].idx;
+                        teams[targetIdx].members.push(p);
+                        teams[targetIdx].totalSkill += (parseInt(p.skill) || 3);
+                    }
                 } else {
                     leftovers.push(p);
                 }
@@ -667,7 +633,6 @@
                         <h3 class="text-xl font-black text-white uppercase tracking-wider">Time ${i+1}</h3>
                         <div class="flex justify-center gap-4 text-xs text-gray-400 mt-1">
                             <span>Jogadores: <strong class="text-white">${t.members.length}</strong></span>
-                            <!-- Removed Team Strength display -->
                         </div>
                     </div>
                     <div class="p-4 space-y-2">
@@ -677,7 +642,6 @@
                                     <i data-lucide="${p.isGoalkeeper ? 'hand' : 'shirt'}" class="w-4 h-4 ${p.isGoalkeeper ? 'text-orange-600' : 'text-green-700'}"></i>
                                     ${p.name}
                                 </span>
-                                <!-- Removed Stars display -->
                             </div>`).join('')}
                     </div>
                 </div>`).join('');
@@ -692,7 +656,6 @@
                          <span class="flex items-center gap-2 text-sm font-bold">
                             <i data-lucide="${p.isGoalkeeper ? 'hand' : 'user'}" class="w-3 h-3"></i> ${p.name}
                          </span>
-                         <!-- Removed Leftover Stars display -->
                     </div>
                 `).join('');
             } else {
@@ -738,10 +701,9 @@
                 if(!c.innerText)return;
                 let l=c.innerText.split('\n').filter(x=>x.trim());
                 t+=`*${l[0]}* (${l[1]})\n`;
-                for(let i=2;i<l.length;i++) t+=`- ${l[i]}\n`; // Changed loop because stars line is gone
+                for(let i=2;i<l.length;i++) t+=`- ${l[i]}\n`;
                 t+='\n';
             });
-            // Adiciona Próximos
             const lList = document.getElementById('leftoversList');
             if (lList && lList.children.length > 0) {
                 t += "*PRÓXIMOS JOGOS:*\n";
@@ -749,13 +711,10 @@
                     t += `- ${child.querySelector('span').innerText.trim()}\n`;
                 }
             }
-
             navigator.clipboard.writeText(t).then(()=>showToast("Copiado!"));
         }
         
         setRating(3);
     </script>
 </body>
-
 </html>
-

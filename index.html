@@ -3,462 +3,757 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Times Equilibrados</title>
-    <!-- Tailwind CSS -->
+    <title>Sorteador de Times Equilibrados (Cloud)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ícones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Fonte Google -->
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #1a472a; /* Verde gramado escuro */
+            background-color: #1a472a;
             background-image: radial-gradient(#2d6a4f 1px, transparent 1px);
             background-size: 20px 20px;
         }
         
-        .title-font {
-            font-family: 'Russo One', sans-serif;
-        }
-
-        /* Animação de confete simples */
-        @keyframes pop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        .title-font { font-family: 'Russo One', sans-serif; }
 
         .player-card {
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .star-btn:hover {
-            transform: scale(1.2);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .field-pattern {
-            background: repeating-linear-gradient(
-                0deg,
-                #2f855a,
-                #2f855a 20px,
-                #276749 20px,
-                #276749 40px
-            );
+        .player-card.selected {
+            background-color: #d1fae5;
+            border-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .player-card.selected .check-icon {
+            opacity: 1;
+            transform: scale(1);
         }
 
-        /* Estilo para o input de estrelas */
-        .rating-star {
-            cursor: pointer;
-            transition: color 0.2s;
+        .check-icon {
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s;
         }
-        .rating-star.active {
-            color: #fbbf24; /* Amarelo */
-            fill: #fbbf24;
+
+        .field-pattern {
+            background: repeating-linear-gradient(0deg, #2f855a, #2f855a 20px, #276749 20px, #276749 40px);
         }
-        .rating-star.inactive {
-            color: #d1d5db; /* Cinza */
+
+        .nav-tab.active {
+            background-color: #fbbf24;
+            color: #78350f;
+            border-bottom: 4px solid #b45309;
+        }
+        .nav-tab.inactive {
+            background-color: rgba(255,255,255,0.1);
+            color: #d1fae5;
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #fbbf24;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal de Senha */
+        .glass-modal {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
         }
     </style>
 </head>
-<body class="min-h-screen text-gray-100 pb-10">
+<body class="min-h-screen text-gray-100 pb-20">
 
     <!-- Cabeçalho -->
-    <header class="bg-gradient-to-r from-green-800 to-green-900 shadow-lg p-4 sticky top-0 z-10 border-b-4 border-yellow-500">
-        <div class="max-w-3xl mx-auto flex items-center justify-between">
+    <header class="bg-gradient-to-r from-green-900 to-green-950 shadow-xl sticky top-0 z-20 border-b border-green-700">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <i data-lucide="trophy" class="text-yellow-400 w-8 h-8"></i>
-                <h1 class="text-2xl md:text-3xl title-font text-white tracking-wider uppercase">Pelada Boituva</h1>
+                <i data-lucide="trophy" class="text-yellow-400 w-6 h-6"></i>
+                <h1 class="text-xl md:text-2xl title-font text-white tracking-wider uppercase">Pelada PRO <span class="text-[10px] bg-blue-600 px-1 rounded align-middle">CLOUD</span></h1>
             </div>
-            <div class="text-xs md:text-sm bg-green-700 px-3 py-1 rounded-full font-bold text-yellow-300 border border-yellow-500">
-                Sorteio Equilibrado
+            
+            <div class="flex bg-green-900/50 p-1 rounded-lg">
+                <button onclick="switchMode('roster')" id="btnRoster" class="nav-tab active px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition-all">
+                    <i data-lucide="users" class="w-4 h-4"></i> Escalação
+                </button>
+                <button onclick="attemptLogin()" id="btnConfig" class="nav-tab inactive px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition-all">
+                    <i id="lockIcon" data-lucide="lock" class="w-3 h-3"></i>
+                    Gerenciar
+                </button>
             </div>
         </div>
     </header>
 
     <main class="max-w-3xl mx-auto p-4 space-y-6">
 
-        <!-- Área de Cadastro -->
-        <section class="bg-white text-gray-800 rounded-xl shadow-2xl overflow-hidden">
-            <div class="p-4 bg-gray-50 border-b border-gray-200">
-                <h2 class="font-bold text-lg flex items-center gap-2 text-green-800">
-                    <i data-lucide="user-plus" class="w-5 h-5"></i> Adicionar Jogador
-                </h2>
-            </div>
-            
-            <div class="p-5 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Craque</label>
-                    <input type="text" id="playerName" class="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-500 focus:ring focus:ring-green-200 transition outline-none text-lg" placeholder="Ex: Ronaldinho" onkeypress="handleEnter(event)">
-                </div>
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="fixed inset-0 bg-green-900/80 backdrop-blur z-50 flex flex-col items-center justify-center">
+            <div class="loader mb-4 w-12 h-12 border-4"></div>
+            <p class="animate-pulse font-bold text-yellow-400">Conectando ao Banco de Dados...</p>
+        </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Habilidade (1 a 5)</label>
-                    <div class="flex gap-2 justify-center bg-gray-100 p-3 rounded-lg" id="starContainer">
-                        <!-- Estrelas geradas via JS -->
+        <!-- Modal de Senha -->
+        <div id="passwordModal" class="fixed inset-0 glass-modal z-50 flex flex-col items-center justify-center hidden p-4">
+            <div class="bg-white text-gray-900 rounded-xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+                <div class="text-center">
+                    <div class="bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="lock" class="text-red-600 w-6 h-6"></i>
                     </div>
-                    <div class="text-center text-sm text-gray-500 mt-1" id="skillLabel">Selecione o nível</div>
+                    <h3 class="font-bold text-xl">Área Restrita</h3>
+                    <p class="text-sm text-gray-500">Digite a senha para gerenciar jogadores.</p>
+                </div>
+                <input type="password" id="adminPassword" class="w-full text-center text-2xl tracking-widest px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-500 outline-none" placeholder="****" maxlength="4">
+                <div class="flex gap-2">
+                    <button onclick="closeLogin()" class="flex-1 bg-gray-200 hover:bg-gray-300 font-bold py-3 rounded-lg text-gray-700">Cancelar</button>
+                    <button onclick="checkPassword()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg">Entrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODO 1: ESCALAÇÃO -->
+        <div id="rosterView" class="space-y-6">
+            <div class="bg-green-800/90 backdrop-blur rounded-xl p-4 border border-green-600 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 sticky top-20 z-10">
+                <div class="flex items-center gap-3">
+                    <div class="bg-green-900 p-2 rounded-full">
+                        <i data-lucide="check-square" class="text-green-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-green-300 uppercase font-bold tracking-wider">Confirmados</p>
+                        <p class="text-xl font-bold text-white"><span id="selectedCount" class="text-yellow-400 text-2xl">0</span> jogadores</p>
+                    </div>
                 </div>
 
-                <button onclick="addPlayer()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition active:scale-95 flex items-center justify-center gap-2 text-lg">
-                    <i data-lucide="plus-circle"></i> Adicionar à Lista
+                <div class="flex items-center gap-3 bg-black/20 p-2 rounded-lg">
+                    <span class="text-sm">Por time:</span>
+                    <button onclick="adjustTeamSize(-1)" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded font-bold">-</button>
+                    <span id="teamSizeDisplay" class="font-bold w-6 text-center">6</span>
+                    <button onclick="adjustTeamSize(1)" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded font-bold">+</button>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold text-green-200 mb-2 uppercase tracking-wide flex justify-between">
+                    <span>Quem vai jogar hoje?</span>
+                    <span class="text-xs font-normal normal-case opacity-70">Toque para selecionar</span>
+                </h3>
+                
+                <div id="rosterGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+
+                <div id="emptyRosterMsg" class="hidden text-center py-10 opacity-60">
+                    <i data-lucide="ghost" class="w-12 h-12 mx-auto mb-2 text-green-300"></i>
+                    <p>Nenhum jogador encontrado.</p>
+                </div>
+            </div>
+
+            <div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-green-900 via-green-900/90 to-transparent pointer-events-none flex justify-center z-20">
+                <button onclick="sortTeamsIntelligent()" id="btnSort" class="pointer-events-auto bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-black py-4 px-12 rounded-full shadow-2xl transform transition hover:-translate-y-1 active:scale-95 flex items-center gap-3 text-xl border-b-4 border-yellow-700 max-w-md w-full justify-center">
+                    <i data-lucide="shuffle"></i> SORTEAR TIMES
                 </button>
             </div>
-        </section>
+        </div>
 
-        <!-- Lista de Jogadores e Configurações -->
-        <div class="grid md:grid-cols-2 gap-4">
-            
-            <!-- Configuração -->
-            <section class="bg-green-800/80 backdrop-blur rounded-xl p-4 border border-green-600 shadow-lg">
-                <h3 class="font-bold text-yellow-300 mb-3 flex items-center gap-2">
-                    <i data-lucide="settings" class="w-4 h-4"></i> Configuração
-                </h3>
-                <div class="flex items-center justify-between">
-                    <label class="text-sm">Jogadores por Time:</label>
-                    <div class="flex items-center bg-white rounded-lg overflow-hidden text-gray-900">
-                        <button onclick="adjustTeamSize(-1)" class="px-3 py-2 hover:bg-gray-200 bg-gray-100">-</button>
-                        <input type="number" id="teamSize" value="6" class="w-12 text-center font-bold outline-none" readonly>
-                        <button onclick="adjustTeamSize(1)" class="px-3 py-2 hover:bg-gray-200 bg-gray-100">+</button>
-                    </div>
+        <!-- MODO 2: GERENCIAR (Protegido) -->
+        <div id="configView" class="hidden space-y-6">
+            <section class="bg-white text-gray-800 rounded-xl shadow-xl overflow-hidden border-2 border-yellow-500/50">
+                <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-bold text-green-800 flex items-center gap-2" id="formTitle">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i> Novo Jogador
+                    </h2>
+                    <button onclick="cancelEdit()" id="btnCancelEdit" class="hidden text-xs text-red-500 font-bold hover:bg-red-50 px-2 py-1 rounded">CANCELAR EDIÇÃO</button>
                 </div>
-                <div class="mt-4 text-xs text-green-200 flex items-center gap-1">
-                    <i data-lucide="info" class="w-3 h-3"></i> Total de jogadores: <span id="totalPlayersCount" class="font-bold text-white text-base ml-1">0</span>
+                
+                <div class="p-5 space-y-4">
+                    <div>
+                        <input type="text" id="playerName" class="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-500 outline-none text-lg bg-gray-50" placeholder="Nome do Jogador" onkeypress="handleEnter(event)">
+                    </div>
+
+                    <div class="flex items-center gap-4 bg-gray-100 p-3 rounded-lg border border-gray-200">
+                         <div class="flex-1">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="isGoalkeeper" class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+                                <span class="font-bold text-gray-700">É Goleiro?</span>
+                                <i data-lucide="hand" class="w-4 h-4 text-gray-500"></i>
+                            </label>
+                         </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase">Nível de Habilidade</label>
+                            <span id="skillLabel" class="text-xs font-bold text-green-600">Médio (3)</span>
+                        </div>
+                        <div class="flex gap-2 justify-center bg-gray-100 p-3 rounded-lg border border-gray-200" id="starContainer"></div>
+                    </div>
+
+                    <button onclick="savePlayer()" id="btnSavePlayer" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow transform transition active:scale-95 flex items-center justify-center gap-2">
+                        <i data-lucide="save"></i> Salvar na Nuvem
+                    </button>
                 </div>
             </section>
 
-            <!-- Botão de Ação -->
-            <section class="flex flex-col justify-end">
-                <button onclick="sortTeams()" id="sortBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-yellow-900 font-black py-4 px-6 rounded-xl shadow-lg transform transition hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl border-b-4 border-yellow-700">
-                    <i data-lucide="shuffle"></i> SORTEAR TIMES
-                </button>
+            <section>
+                <div class="flex justify-between items-end mb-3">
+                    <h3 class="font-bold text-lg text-white">Banco de Jogadores</h3>
+                    <div id="syncStatus" class="text-xs text-green-300 animate-pulse hidden">Sincronizando...</div>
+                </div>
+                <div id="configList" class="space-y-2"></div>
+                <div class="text-center mt-6">
+                    <button onclick="clearAllData()" class="text-xs text-red-400 hover:text-red-200 underline">Apagar todos os dados</button>
+                </div>
             </section>
         </div>
 
-        <!-- Lista de Jogadores Adicionados -->
-        <section id="playersListSection" class="hidden">
-            <div class="flex justify-between items-end mb-2">
-                <h3 class="font-bold text-lg">Jogadores na Espera</h3>
-                <button onclick="clearAll()" class="text-xs text-red-300 hover:text-red-100 underline">Limpar tudo</button>
+        <!-- TELA DE RESULTADO -->
+        <div id="resultView" class="hidden space-y-8 pt-4">
+            <div class="flex items-center justify-between">
+                <button onclick="backToRoster()" class="text-white hover:text-yellow-300 flex items-center gap-1 font-bold bg-black/20 px-3 py-2 rounded-lg">
+                    <i data-lucide="arrow-left"></i> Voltar
+                </button>
+                <h2 class="title-font text-2xl text-yellow-400">Times Sorteados</h2>
+                <div class="w-20"></div>
             </div>
-            <div id="playersGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <!-- Cards entram aqui -->
-            </div>
-        </section>
 
-        <!-- Resultado do Sorteio -->
-        <section id="resultSection" class="hidden space-y-6">
-            <h2 class="text-center title-font text-3xl text-yellow-400 drop-shadow-md">Times Definidos</h2>
-            <div id="teamsContainer" class="grid md:grid-cols-2 gap-6">
-                <!-- Times gerados aqui -->
+            <div id="analysisMsg" class="text-center text-xs bg-black/30 p-2 rounded text-green-200 hidden"></div>
+
+            <div id="teamsContainer" class="grid md:grid-cols-2 gap-6"></div>
+            
+            <!-- Seção de Próximos (Leftovers) -->
+            <div id="leftoversContainer" class="hidden mt-8 border-t border-green-700 pt-6">
+                <h3 class="text-center font-bold text-green-300 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
+                    <i data-lucide="clock"></i> Próximos Jogos (Banco)
+                </h3>
+                <div id="leftoversList" class="grid grid-cols-2 gap-3 opacity-80"></div>
             </div>
             
-            <div class="text-center pb-8">
-                <button onclick="copyToClipboard()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg inline-flex items-center gap-2">
-                    <i data-lucide="copy"></i> Copiar para WhatsApp
+            <div class="fixed bottom-6 right-6 z-30">
+                <button onclick="copyToClipboard()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold p-4 rounded-full shadow-2xl flex items-center gap-2 animate-bounce">
+                    <i data-lucide="copy" class="w-6 h-6"></i>
                 </button>
             </div>
-        </section>
+        </div>
 
     </main>
 
-    <!-- Notificação Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+    <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 text-white px-6 py-3 rounded-full shadow-xl translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 whitespace-nowrap backdrop-blur">
         <i data-lucide="check-circle" class="text-green-400"></i>
         <span id="toastMsg">Mensagem</span>
     </div>
 
-    <script>
-        // Inicialização de ícones e estado
-        lucide.createIcons();
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuZveL9LVmvsvIhrvOUbab3MGA8LPoeq0",
+            authDomain: "futebol-27972.firebaseapp.com",
+            projectId: "futebol-27972",
+            storageBucket: "futebol-27972.firebasestorage.app",
+            messagingSenderId: "447653679842",
+            appId: "1:447653679842:web:5107789bb7db36519dc4bb",
+            measurementId: "G-0QKTVYHC7P"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
         
-        let players = [];
-        let currentRating = 3; // Valor padrão inicial
+        let userId = null;
+        let players = []; 
+        
+        window.teamSize = 6;
+        window.currentRating = 3;
+        window.isAuthenticated = false;
+        window.editingId = null; 
+        const APP_PASSWORD = "1234";
 
-        // Setup das Estrelas
-        const starContainer = document.getElementById('starContainer');
-        const skillLabel = document.getElementById('skillLabel');
-        const labels = ["Perna de Pau (1)", "Iniciante (2)", "Médio (3)", "Bom (4)", "Craque (5)"];
-
-        function renderStars() {
-            starContainer.innerHTML = '';
-            for (let i = 1; i <= 5; i++) {
-                const star = document.createElement('i');
-                // Usando classes do Lucide ou SVG direto
-                star.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="${i <= currentRating ? '#fbbf24' : 'none'}" stroke="${i <= currentRating ? '#fbbf24' : '#9ca3af'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star rating-star ${i <= currentRating ? 'active' : 'inactive'}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-                star.onclick = () => setRating(i);
-                starContainer.appendChild(star);
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.warn("Auth falhou, tentando fallback anon:", error);
+                try {
+                    await signInAnonymously(auth);
+                } catch (anonError) {
+                    document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-400 p-4 text-center">Erro Conexão.</p>`;
+                }
             }
-            skillLabel.innerText = labels[currentRating - 1];
-        }
-        
-        function setRating(val) {
-            currentRating = val;
-            renderStars();
+        };
+
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                setupRealtimeListener();
+            }
+        });
+
+        function setupRealtimeListener() {
+            if (!userId) return;
+            const q = query(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'players'));
+            onSnapshot(q, (snapshot) => {
+                players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateUI();
+                document.getElementById('syncStatus').classList.remove('hidden');
+                setTimeout(() => document.getElementById('syncStatus').classList.add('hidden'), 1000);
+            }, (err) => console.error(err));
         }
 
-        function adjustTeamSize(delta) {
-            const input = document.getElementById('teamSize');
-            let val = parseInt(input.value) + delta;
-            if (val < 2) val = 2;
-            if (val > 20) val = 20;
-            input.value = val;
+        window.attemptLogin = () => {
+            if (window.isAuthenticated) {
+                switchMode('config');
+            } else {
+                document.getElementById('passwordModal').classList.remove('hidden');
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPassword').focus();
+            }
         }
 
-        function handleEnter(e) {
-            if (e.key === 'Enter') addPlayer();
+        window.closeLogin = () => document.getElementById('passwordModal').classList.add('hidden');
+
+        window.checkPassword = () => {
+            if (document.getElementById('adminPassword').value === APP_PASSWORD) {
+                window.isAuthenticated = true;
+                closeLogin();
+                switchMode('config');
+                showToast("Acesso Liberado");
+                document.getElementById('lockIcon').setAttribute('data-lucide', 'unlock');
+                lucide.createIcons();
+            } else {
+                showToast("Senha incorreta!", true);
+                document.getElementById('adminPassword').value = '';
+            }
         }
 
-        function addPlayer() {
+        window.savePlayer = async () => {
+            if (!userId) return;
             const nameInput = document.getElementById('playerName');
+            const isGKInput = document.getElementById('isGoalkeeper');
             const name = nameInput.value.trim();
 
-            if (!name) {
-                showToast("Digite o nome do jogador!", true);
-                return;
-            }
+            if (!name) { showToast("Digite um nome!", true); return; }
 
-            players.push({
-                id: Date.now(),
+            const btn = document.getElementById('btnSavePlayer');
+            btn.disabled = true;
+
+            const playerData = {
                 name: name,
-                skill: currentRating
-            });
+                skill: Number(window.currentRating),
+                isGoalkeeper: isGKInput.checked
+            };
 
-            nameInput.value = '';
-            nameInput.focus();
-            // Reseta rating para 3 para agilizar
+            try {
+                if (window.editingId) {
+                    await updateDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', window.editingId), playerData);
+                    showToast(`${name} atualizado!`);
+                    window.cancelEdit();
+                } else {
+                    playerData.selected = true;
+                    playerData.createdAt = Date.now();
+                    await addDoc(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'players'), playerData);
+                    showToast(`${name} adicionado!`);
+                    nameInput.value = '';
+                    isGKInput.checked = false;
+                    setRating(3);
+                }
+                nameInput.focus();
+            } catch (e) {
+                console.error(e);
+                showToast("Erro ao salvar", true);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        window.startEdit = (id) => {
+            const p = players.find(x => x.id === id);
+            if (!p) return;
+            window.editingId = id;
+            document.getElementById('playerName').value = p.name;
+            document.getElementById('isGoalkeeper').checked = !!p.isGoalkeeper;
+            setRating(p.skill);
+            
+            document.getElementById('btnSavePlayer').innerHTML = `<i data-lucide="refresh-cw"></i> Atualizar Jogador`;
+            document.getElementById('btnSavePlayer').classList.replace('bg-green-600', 'bg-blue-600');
+            document.getElementById('btnSavePlayer').classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+            document.getElementById('formTitle').innerHTML = `<i data-lucide="edit"></i> Editando: ${p.name}`;
+            document.getElementById('formTitle').classList.add('text-blue-600');
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+            
+            document.getElementById('configView').scrollIntoView({behavior: 'smooth'});
+            document.getElementById('playerName').focus();
+            lucide.createIcons();
+        }
+
+        window.cancelEdit = () => {
+            window.editingId = null;
+            document.getElementById('playerName').value = '';
+            document.getElementById('isGoalkeeper').checked = false;
             setRating(3);
             
-            updateUI();
-            showToast(`${name} adicionado!`);
+            document.getElementById('btnSavePlayer').innerHTML = `<i data-lucide="save"></i> Salvar na Nuvem`;
+            document.getElementById('btnSavePlayer').classList.replace('bg-blue-600', 'bg-green-600');
+            document.getElementById('btnSavePlayer').classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+            document.getElementById('formTitle').innerHTML = `<i data-lucide="user-plus" class="w-5 h-5"></i> Novo Jogador`;
+            document.getElementById('formTitle').classList.remove('text-blue-600');
+            document.getElementById('btnCancelEdit').classList.add('hidden');
+            lucide.createIcons();
         }
 
-        function removePlayer(id) {
-            players = players.filter(p => p.id !== id);
-            updateUI();
-        }
-
-        function clearAll() {
-            if(confirm("Tem certeza que quer apagar todos os jogadores?")) {
-                players = [];
-                updateUI();
-                document.getElementById('resultSection').classList.add('hidden');
+        window.removePlayer = async (docId) => {
+            if (!userId) return;
+            if(confirm('Remover jogador permanentemente?')) {
+                if(window.editingId === docId) window.cancelEdit();
+                await deleteDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', docId));
             }
         }
 
-        function updateUI() {
-            const grid = document.getElementById('playersGrid');
-            const countSpan = document.getElementById('totalPlayersCount');
-            const section = document.getElementById('playersListSection');
-
-            countSpan.innerText = players.length;
-
-            if (players.length === 0) {
-                section.classList.add('hidden');
-            } else {
-                section.classList.remove('hidden');
-            }
-
-            grid.innerHTML = '';
-            
-            // Ordenar visualmente apenas por ordem de chegada (invertida) para ver os ultimos
-            const displayList = [...players].reverse();
-
-            displayList.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'player-card bg-white rounded-lg p-3 shadow flex justify-between items-center border-l-4 ' + getBorderColor(p.skill);
-                
-                div.innerHTML = `
-                    <div class="overflow-hidden">
-                        <div class="font-bold text-gray-800 truncate">${p.name}</div>
-                        <div class="flex text-yellow-500">
-                            ${getStarString(p.skill)}
+        function renderConfigList() {
+            const list = document.getElementById('configList');
+            const sorted = [...players].sort((a,b) => b.createdAt - a.createdAt);
+            list.innerHTML = sorted.map(p => `
+                <div class="bg-white/10 backdrop-blur border border-white/10 rounded-lg p-3 flex justify-between items-center ${window.editingId === p.id ? 'border-blue-400 bg-blue-900/20' : ''}">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-8 h-8 flex-shrink-0 rounded-full ${p.isGoalkeeper ? 'bg-orange-600 border-orange-400' : 'bg-green-800 border-yellow-500/30'} flex items-center justify-center font-bold text-white text-sm border">
+                            ${p.isGoalkeeper ? '<i data-lucide="hand" class="w-4 h-4"></i>' : p.skill}
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <span class="font-medium text-white truncate">${p.name} ${p.isGoalkeeper ? '<span class="text-[10px] bg-orange-500 px-1 rounded">GK</span>' : ''}</span>
+                            <div class="flex text-yellow-500 text-[10px] opacity-70">
+                                ${'★'.repeat(p.skill)}
+                            </div>
                         </div>
                     </div>
-                    <button onclick="removePlayer(${p.id})" class="text-red-400 hover:text-red-600 p-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>
-                `;
-                grid.appendChild(div);
-            });
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button onclick="startEdit('${p.id}')" class="text-blue-300 hover:bg-blue-900/50 p-2 rounded transition" title="Editar">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="removePlayer('${p.id}')" class="text-red-400 hover:bg-red-900/50 p-2 rounded transition" title="Excluir">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function getBorderColor(skill) {
-            if (skill >= 5) return 'border-purple-500';
-            if (skill >= 4) return 'border-green-500';
-            if (skill >= 3) return 'border-yellow-500';
-            return 'border-gray-400';
-        }
-
-        function getStarString(count) {
-            let s = '';
-            for(let i=0; i<count; i++) s += '★';
-            return s;
-        }
-
-        // ==========================================
-        // LÓGICA DO SORTEIO (O CÉREBRO DO APP)
-        // ==========================================
-        function sortTeams() {
-            if (players.length < 2) {
-                showToast("Adicione pelo menos 2 jogadores!", true);
-                return;
+        window.handleEnter = (e) => { if (e.key === 'Enter') window.savePlayer(); }
+        
+        window.switchMode = (mode) => {
+            document.getElementById('resultView').classList.add('hidden');
+            if (mode === 'roster') {
+                document.getElementById('rosterView').classList.remove('hidden');
+                document.getElementById('configView').classList.add('hidden');
+                document.getElementById('btnRoster').classList.replace('inactive', 'active');
+                document.getElementById('btnConfig').classList.replace('active', 'inactive');
+            } else {
+                document.getElementById('rosterView').classList.add('hidden');
+                document.getElementById('configView').classList.remove('hidden');
+                document.getElementById('btnRoster').classList.replace('active', 'inactive');
+                document.getElementById('btnConfig').classList.replace('inactive', 'active');
+                window.cancelEdit(); 
             }
+            updateUI();
+        }
 
-            const playersPerTeam = parseInt(document.getElementById('teamSize').value);
-            const numberOfTeams = Math.ceil(players.length / playersPerTeam);
-
-            // 1. Separar jogadores por habilidade (buckets)
-            let buckets = {5:[], 4:[], 3:[], 2:[], 1:[]};
-            players.forEach(p => buckets[p.skill].push(p));
-
-            // 2. Embaralhar cada bucket (para que os de mesmo nível não fiquem sempre na mesma ordem)
-            for(let k in buckets) {
-                buckets[k] = shuffleArray(buckets[k]);
+        window.toggleSelection = async (docId) => {
+            if (!userId) return;
+            const p = players.find(x => x.id === docId);
+            if (p) {
+                const card = document.querySelector(`[data-id="${docId}"]`);
+                if(card) card.classList.toggle('selected');
+                await updateDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', docId), { selected: !p.selected });
             }
+        }
+        
+        window.clearAllData = async () => {
+            if (!userId) return;
+            if(confirm("ATENÇÃO: Apagar TODOS os jogadores e o histórico?")) {
+                players.forEach(async p => await deleteDoc(doc(db, 'artifacts', 'futebol_app', 'users', userId, 'players', p.id)));
+            }
+        }
 
-            // 3. Criar uma lista única ordenada por habilidade (do melhor pro pior), mas com aleatoriedade dentro do nível
-            let sortedPool = [];
-            [5, 4, 3, 2, 1].forEach(level => {
-                sortedPool = sortedPool.concat(buckets[level]);
-            });
+        async function getLastGameHistory() {
+            if (!userId) return null;
+            try {
+                const q = query(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'history'), orderBy('createdAt', 'desc'), limit(1));
+                const s = await getDocs(q);
+                return s.empty ? null : s.docs[0].data();
+            } catch (e) {
+                console.warn("Sem histórico acessível:", e);
+                return null;
+            }
+        }
+        
+        async function saveGameHistory(teams) {
+             if (!userId) return;
+             try {
+                await addDoc(collection(db, 'artifacts', 'futebol_app', 'users', userId, 'history'), { createdAt: Date.now(), teams: teams.map(t => t.members.map(p => p.name)) });
+             } catch (e) {}
+        }
 
-            // 4. Distribuição "Snake" (Cobra) para equilibrar
-            // Ex: Time 1 pega o melhor, Time 2 o segundo... Na volta, Time 2 pega primeiro.
-            let teams = Array.from({length: numberOfTeams}, () => ({members: [], totalSkill: 0}));
+        window.sortTeamsIntelligent = async () => {
+            const active = players.filter(p => p.selected);
+            if (active.length < window.teamSize) { 
+                showToast(`Selecione pelo menos ${window.teamSize} jogadores!`, true); 
+                return; 
+            }
             
-            sortedPool.forEach((player, index) => {
-                // Determina qual time recebe o jogador
-                // Round 0 (0 a N-1): 0, 1, 2...
-                // Round 1 (N a 2N-1): 2, 1, 0... (Inverte a ordem)
-                const round = Math.floor(index / numberOfTeams);
-                let teamIndex;
+            const btn = document.getElementById('btnSort');
+            const txt = btn.innerHTML;
+            btn.innerHTML = `<div class="loader w-6 h-6 border-white border-t-transparent"></div>`;
+            btn.disabled = true;
 
-                if (round % 2 === 0) {
-                    teamIndex = index % numberOfTeams;
+            try {
+                const last = await getLastGameHistory();
+                let best = null, lowScore = Infinity;
+                
+                // Tenta 20x para achar a melhor combinação
+                for (let i=0; i<20; i++) {
+                    const result = genTeams(active, window.teamSize);
+                    let sc = last ? calcRep(result.teams, last.teams) : 0;
+                    if (sc < lowScore || (sc === lowScore && Math.random()>0.5)) { 
+                        lowScore = sc; 
+                        best = result; 
+                    }
+                }
+                
+                if (best) {
+                    renderResults(best.teams, best.leftovers, lowScore, !!last);
+                    saveGameHistory(best.teams); 
                 } else {
-                    teamIndex = (numberOfTeams - 1) - (index % numberOfTeams);
+                    throw new Error("Falha ao gerar times");
                 }
 
-                teams[teamIndex].members.push(player);
-                teams[teamIndex].totalSkill += player.skill;
+            } catch (e) { 
+                console.error("Erro no sorteio:", e); 
+                showToast("Erro ao processar sorteio", true); 
+            } finally { 
+                btn.innerHTML = txt; 
+                btn.disabled = false; 
+            }
+        }
+
+        // Lógica Principal de Separação (Corrigida e Simplificada)
+        function genTeams(list, teamSize) {
+            let gks = list.filter(p => p.isGoalkeeper);
+            let field = list.filter(p => !p.isGoalkeeper);
+            
+            const numTeams = Math.floor(list.length / teamSize);
+            
+            if (numTeams < 1) {
+                return { teams: [{members: list, totalSkill: 0}], leftovers: [] };
+            }
+
+            let teams = Array.from({length: numTeams}, () => ({members: [], totalSkill: 0}));
+            let leftovers = [];
+
+            // 1. Distribuir Goleiros
+            gks = gks.sort(() => Math.random() - 0.5);
+            for (let i = 0; i < numTeams; i++) {
+                if (i < gks.length) {
+                    teams[i].members.push(gks[i]);
+                    teams[i].totalSkill += (parseInt(gks[i].skill) || 3);
+                }
+            }
+            if (gks.length > numTeams) gks.slice(numTeams).forEach(g => leftovers.push(g));
+
+            // 2. Ordenar Linha por Skill
+            let buckets = {5:[],4:[],3:[],2:[],1:[]};
+            field.forEach(p => {
+                let s = parseInt(p.skill);
+                if (isNaN(s) || s < 1 || s > 5) s = 3; 
+                buckets[s].push(p);
+            });
+            for(let k in buckets) buckets[k] = buckets[k].sort(()=>Math.random()-0.5);
+            
+            let sortedField = []; 
+            [5,4,3,2,1].forEach(l => sortedField = sortedField.concat(buckets[l]));
+
+            // 3. Preencher Times até o limite (Método Greedy Balanceado)
+            sortedField.forEach(p => {
+                // Encontrar times que NÃO estão cheios
+                let availableTeams = teams.map((t, i) => ({...t, index: i})).filter(t => t.members.length < teamSize);
+                
+                if (availableTeams.length > 0) {
+                    // Desses, pegar o que tem MENOS habilidade total (para equilibrar)
+                    // Se empatar na habilidade, pega o que tem MENOS jogadores
+                    availableTeams.sort((a, b) => {
+                        if (a.totalSkill !== b.totalSkill) return a.totalSkill - b.totalSkill;
+                        return a.members.length - b.members.length;
+                    });
+                    
+                    let targetIndex = availableTeams[0].index;
+                    teams[targetIndex].members.push(p);
+                    teams[targetIndex].totalSkill += (parseInt(p.skill) || 3);
+                } else {
+                    leftovers.push(p);
+                }
             });
 
-            renderResults(teams);
+            return { teams, leftovers };
         }
 
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
+        function calcRep(newT, lastT) {
+            let c=0, pairs=new Set();
+            if(!lastT) return 0;
+            lastT.forEach(grp=>{
+                if(!grp) return;
+                for(let i=0;i<grp.length;i++) for(let j=i+1;j<grp.length;j++) pairs.add([grp[i],grp[j]].sort().join('|'));
+            });
+            newT.forEach(tm=>{
+                let m=tm.members;
+                for(let i=0;i<m.length;i++) for(let j=i+1;j<m.length;j++) if(pairs.has([m[i].name,m[j].name].sort().join('|'))) c++;
+            });
+            return c;
         }
 
-        function renderResults(teams) {
-            const container = document.getElementById('teamsContainer');
-            const resultSection = document.getElementById('resultSection');
-            
-            container.innerHTML = '';
-            
-            teams.forEach((team, i) => {
-                const teamCard = document.createElement('div');
-                teamCard.className = 'field-pattern rounded-xl overflow-hidden shadow-2xl border-4 border-white';
-                
-                // Cabeçalho do time
-                let avg = (team.totalSkill / team.members.length).toFixed(1);
-                if(isNaN(avg)) avg = 0;
+        window.updateUI = () => { renderRoster(); renderConfigList(); updateCounts(); lucide.createIcons(); }
+        
+        function renderRoster() {
+            const g=document.getElementById('rosterGrid'), m=document.getElementById('emptyRosterMsg');
+            if(!players.length){ g.innerHTML=''; m.classList.remove('hidden'); return;}
+            m.classList.add('hidden');
+            g.innerHTML = [...players].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`
+                <div onclick="toggleSelection('${p.id}')" data-id="${p.id}" class="player-card cursor-pointer bg-white text-gray-800 rounded-lg p-3 border-2 ${p.selected?'selected border-green-600':'border-transparent'} relative overflow-hidden select-none">
+                    <div class="flex justify-between items-center z-10 relative">
+                        <span class="font-bold truncate pr-2 flex items-center gap-1">
+                            ${p.isGoalkeeper ? '<i data-lucide="hand" class="w-3 h-3 text-orange-600"></i>' : ''}
+                            ${p.name}
+                        </span>
+                        <div class="check-icon bg-green-600 text-white rounded-full p-0.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    </div>
+                </div>`).join('');
+        }
 
-                let html = `
-                    <div class="bg-gradient-to-b from-gray-900 to-gray-800 p-3 text-center border-b-2 border-yellow-500">
-                        <h3 class="text-xl font-black text-white uppercase tracking-wider">Time ${i + 1}</h3>
-                        <div class="flex justify-center items-center gap-4 text-xs text-gray-400 mt-1">
-                            <span><strong class="text-white">${team.members.length}</strong> Jogadores</span>
-                            <span>Força: <strong class="text-yellow-400">${team.totalSkill}</strong> (${avg}★/avg)</span>
+        function renderResults(teams, leftovers, sc, hist) {
+            document.getElementById('rosterView').classList.add('hidden');
+            document.getElementById('resultView').classList.remove('hidden');
+            
+            const msg = document.getElementById('analysisMsg');
+            if(hist) {
+                msg.classList.remove('hidden');
+                msg.innerHTML = sc===0?`<span class="text-yellow-400">★ Sorteio Perfeito!</span> Sem repetições.`:`Evitando panelas (${sc} pares mantidos).`;
+            } else msg.classList.add('hidden');
+            
+            document.getElementById('teamsContainer').innerHTML = teams.map((t,i)=>`
+                <div class="field-pattern rounded-xl overflow-hidden shadow-2xl border-4 border-white h-fit">
+                    <div class="bg-gray-900 p-3 text-center border-b-2 border-yellow-500">
+                        <h3 class="text-xl font-black text-white uppercase tracking-wider">Time ${i+1}</h3>
+                        <div class="flex justify-center gap-4 text-xs text-gray-400 mt-1">
+                            <span>Jogadores: <strong class="text-white">${t.members.length}</strong></span>
+                            <!-- Removed Team Strength display -->
                         </div>
                     </div>
                     <div class="p-4 space-y-2">
-                `;
-
-                // Lista de jogadores do time
-                team.members.forEach(p => {
-                    html += `
-                        <div class="flex justify-between items-center bg-white/90 p-2 rounded shadow-sm">
-                            <span class="font-bold text-gray-900 flex items-center gap-2">
-                                <i data-lucide="shirt" class="w-4 h-4 text-green-700"></i>
-                                ${p.name}
-                            </span>
-                            <div class="flex text-yellow-500 text-xs">
-                                ${getStarString(p.skill)}
-                            </div>
-                        </div>
-                    `;
-                });
-
-                html += `</div>`;
-                teamCard.innerHTML = html;
-                container.appendChild(teamCard);
-            });
-
-            resultSection.classList.remove('hidden');
+                        ${t.members.map(p=>`
+                            <div class="flex justify-between items-center bg-white/95 p-2 rounded shadow-sm ${p.isGoalkeeper ? 'border-l-4 border-orange-500' : ''}">
+                                <span class="font-bold text-gray-900 flex items-center gap-2">
+                                    <i data-lucide="${p.isGoalkeeper ? 'hand' : 'shirt'}" class="w-4 h-4 ${p.isGoalkeeper ? 'text-orange-600' : 'text-green-700'}"></i>
+                                    ${p.name}
+                                </span>
+                                <!-- Removed Stars display -->
+                            </div>`).join('')}
+                    </div>
+                </div>`).join('');
             
-            // Scroll suave até o resultado
-            setTimeout(() => {
-                resultSection.scrollIntoView({ behavior: 'smooth' });
-                lucide.createIcons();
-            }, 100);
-        }
-
-        function copyToClipboard() {
-            const teams = document.getElementById('teamsContainer').children;
-            let text = "⚽ *TIMES SORTEADOS* ⚽\n\n";
-
-            Array.from(teams).forEach((card) => {
-                const title = card.querySelector('h3').innerText;
-                const stats = card.querySelector('.text-gray-400').innerText.replace(/\n/g, ' ');
-                text += `*${title}* (${stats})\n`;
-                
-                const players = card.querySelectorAll('.bg-white\\/90');
-                players.forEach(p => {
-                    const name = p.querySelector('.font-bold').innerText;
-                    const stars = p.querySelector('.text-yellow-500').innerText;
-                    text += `- ${name} ${stars}\n`;
-                });
-                text += "\n";
-            });
-
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("Copiado! Cole no WhatsApp.");
-            });
-        }
-
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toastMsg');
-            const icon = toast.querySelector('i');
-            
-            msgEl.innerText = msg;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            
-            if(isError) {
-                icon.setAttribute('data-lucide', 'alert-circle');
-                icon.classList.remove('text-green-400');
-                icon.classList.add('text-red-400');
+            // Render Leftovers
+            const lContainer = document.getElementById('leftoversContainer');
+            const lList = document.getElementById('leftoversList');
+            if (leftovers && leftovers.length > 0) {
+                lContainer.classList.remove('hidden');
+                lList.innerHTML = leftovers.map(p => `
+                    <div class="bg-gray-800 p-2 rounded text-gray-300 flex items-center justify-between">
+                         <span class="flex items-center gap-2 text-sm font-bold">
+                            <i data-lucide="${p.isGoalkeeper ? 'hand' : 'user'}" class="w-3 h-3"></i> ${p.name}
+                         </span>
+                         <!-- Removed Leftover Stars display -->
+                    </div>
+                `).join('');
             } else {
-                icon.setAttribute('data-lucide', 'check-circle');
-                icon.classList.add('text-green-400');
-                icon.classList.remove('text-red-400');
+                lContainer.classList.add('hidden');
             }
-            lucide.createIcons();
 
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
+            window.scrollTo({top:0, behavior:'smooth'}); 
+            lucide.createIcons();
         }
 
-        // Init
-        renderStars();
+        window.adjustTeamSize = (d) => { let v=window.teamSize+d; if(v<2)v=2; if(v>20)v=20; window.teamSize=v; updateCounts(); }
+        window.updateCounts = () => {
+            document.getElementById('selectedCount').innerText = players.filter(p=>p.selected).length;
+            document.getElementById('teamSizeDisplay').innerText = window.teamSize;
+        }
+        window.backToRoster = () => switchMode('roster');
+        window.setRating = (v) => {
+            window.currentRating = v;
+            const c = document.getElementById('starContainer');
+            c.innerHTML='';
+            for(let i=1;i<=5;i++){
+                const a = i<=v;
+                const s = document.createElement('div');
+                s.className='cursor-pointer p-1';
+                s.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="${a?'#fbbf24':'#e5e7eb'}" stroke="${a?'#b45309':'#9ca3af'}" stroke-width="1.5" class="transition-transform hover:scale-110"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+                s.onclick=()=>setRating(i);
+                c.appendChild(s);
+            }
+            document.getElementById('skillLabel').innerText = ["Perna de Pau (1)","Iniciante (2)","Médio (3)","Bom (4)","Craque (5)"][v-1];
+        }
+        window.showToast = (msg, err=false) => {
+            const t = document.getElementById('toast'), i = t.querySelector('i');
+            document.getElementById('toastMsg').innerText = msg;
+            i.setAttribute('data-lucide', err?'alert-circle':'check-circle');
+            i.className = err?'text-red-400':'text-green-400';
+            lucide.createIcons();
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(()=>t.classList.add('translate-y-20', 'opacity-0'),3000);
+        }
+        window.copyToClipboard = () => {
+            let t = "⚽ *TIMES SORTEADOS* ⚽\n\n";
+            document.getElementById('teamsContainer').childNodes.forEach(c=>{
+                if(!c.innerText)return;
+                let l=c.innerText.split('\n').filter(x=>x.trim());
+                t+=`*${l[0]}* (${l[1]})\n`;
+                for(let i=2;i<l.length;i++) t+=`- ${l[i]}\n`; // Changed loop because stars line is gone
+                t+='\n';
+            });
+            // Adiciona Próximos
+            const lList = document.getElementById('leftoversList');
+            if (lList && lList.children.length > 0) {
+                t += "*PRÓXIMOS JOGOS:*\n";
+                for (let child of lList.children) {
+                    t += `- ${child.querySelector('span').innerText.trim()}\n`;
+                }
+            }
 
+            navigator.clipboard.writeText(t).then(()=>showToast("Copiado!"));
+        }
+        
+        setRating(3);
     </script>
 </body>
 </html>
